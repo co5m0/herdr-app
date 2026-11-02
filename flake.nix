@@ -30,10 +30,11 @@
         system:
         let
           pkgs = pkgsFor system;
-          herdr-app = pkgs.callPackage ./nix/package.nix { inherit ghostty; };
+          herdr-core = pkgs.callPackage ./nix/core.nix { };
+          herdr-app = pkgs.callPackage ./nix/package.nix { inherit ghostty herdr-core; };
         in
         {
-          inherit herdr-app;
+          inherit herdr-app herdr-core;
           default = herdr-app;
         }
       );
@@ -120,9 +121,9 @@
           pkgs = pkgsFor system;
         in
         {
-          inherit (self.packages.${system}) herdr-app;
+          inherit (self.packages.${system}) herdr-app herdr-core;
           nix-format = pkgs.runCommand "herdr-nix-format" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
-            nixfmt --check ${./flake.nix} ${./nix/package.nix}
+            nixfmt --check ${./flake.nix} ${./nix/package.nix} ${./nix/core.nix}
             touch "$out"
           '';
         }

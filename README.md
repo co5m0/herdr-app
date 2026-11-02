@@ -61,9 +61,9 @@ To build without launching, use `nix build github:herdrdev/herdr-app`; the execu
 nix run github:herdrdev/herdr-app -- --skill
 ```
 
-The Nix package does not include herdr-core: install it separately and put `hc`
-on PATH, or set `core` to its path in `settings.json`. On NixOS, use a Nix-compatible
-core build rather than the generic Linux installer. Linux still needs a desktop
+The flake also builds herdr-core (`nix build github:herdrdev/herdr-app#herdr-core`).
+The app finds that core when `hc` is not on PATH and `core` is not set in
+`settings.json`. Linux still needs a desktop
 session and Vulkan drivers; on non-NixOS distributions you may need
 [nixGL](https://github.com/nix-community/nixGL) for host graphics drivers.
 Update the Nix package through Nix, not the in-app updater.

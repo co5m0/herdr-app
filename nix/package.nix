@@ -17,6 +17,7 @@
   mesa,
   xdg-utils,
   ghostty,
+  herdr-core,
 }:
 let
   runtimeDependencies = [
@@ -83,7 +84,12 @@ rustPlatform.buildRustPackage {
   dontUseZigInstall = true;
 
   # herdr-core passes the app's environment to every terminal, so avoid a PATH wrapper.
-  postPatch = lib.optionalString stdenv.hostPlatform.isLinux ''
+  postPatch = ''
+    substituteInPlace src/core_bin.rs \
+      --replace-fail 'PathBuf::from("/run/current-system/sw/bin"),' \
+        'PathBuf::from("/run/current-system/sw/bin"), PathBuf::from("${herdr-core}/bin"),'
+  ''
+  + lib.optionalString stdenv.hostPlatform.isLinux ''
     substituteInPlace src/links.rs \
       --replace-fail '"xdg-open"' '"${xdg-utils}/bin/xdg-open"'
   '';
