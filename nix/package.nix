@@ -6,7 +6,6 @@
   pkg-config,
   clang,
   libclang,
-  makeWrapper,
   makeDesktopItem,
   copyDesktopItems,
   fontconfig,
@@ -71,7 +70,6 @@ rustPlatform.buildRustPackage {
     clang
     rustPlatform.bindgenHook
     zig_0_16
-    makeWrapper
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [ copyDesktopItems ];
 
@@ -83,6 +81,12 @@ rustPlatform.buildRustPackage {
   dontUseZigBuild = true;
   dontUseZigCheck = true;
   dontUseZigInstall = true;
+
+  # herdr-core passes the app's environment to every terminal, so avoid a PATH wrapper.
+  postPatch = lib.optionalString stdenv.hostPlatform.isLinux ''
+    substituteInPlace src/links.rs \
+      --replace-fail '"xdg-open"' '"${xdg-utils}/bin/xdg-open"'
+  '';
 
   postUnpack = ''
     mkdir -p "$sourceRoot/vendor/ghostty"
@@ -132,9 +136,11 @@ rustPlatform.buildRustPackage {
   postInstall = lib.optionalString stdenv.hostPlatform.isLinux ''
     install -Dm644 assets/icons/herdr-ui-icon-clean.svg \
       "$out/share/icons/hicolor/scalable/apps/herdr-app.svg"
-    wrapProgram "$out/bin/herdr-app" \
-      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath runtimeDependencies} \
-      --suffix PATH : ${lib.makeBinPath [ xdg-utils ]}
+  '';
+
+  # RUNPATH instead of LD_LIBRARY_PATH, which would leak into every terminal.
+  postFixup = lib.optionalString stdenv.hostPlatform.isLinux ''
+    patchelf --add-rpath ${lib.makeLibraryPath runtimeDependencies} "$out/bin/herdr-app"
   '';
 
   doInstallCheck = true;
